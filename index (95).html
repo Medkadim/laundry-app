@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Laundry Service Livraison App</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#f8fafc;--surface:#fff;--border:#e2e8f0;
+  --accent:#0f6e56;--accent-light:#e1f5ee;
+  --orange:#993c1d;--orange-light:#faece7;
+  --blue:#185fa5;--blue-light:#e6f1fb;
+  --yellow:#92400e;--yellow-light:#fef9c3;
+  --text:#0f172a;--muted:#64748b;
+  --danger:#a32d2d;--danger-light:#fcebeb;
+  --radius:12px;--radius-lg:16px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.btn{cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 16px;border-radius:var(--radius);font-size:13px;font-family:inherit;transition:all 0.15s;}
+.btn:hover{background:#f1f5f9;}.btn:active{transform:scale(0.97);}
+.btn-green{background:var(--accent);color:#fff;border-color:var(--accent);}.btn-green:hover{background:#085041;}
+.btn-orange{background:var(--orange);color:#fff;border-color:var(--orange);}.btn-orange:hover{background:#712b13;}
+.btn-red{background:#a32d2d;color:#fff;border-color:#a32d2d;}.btn-red:hover{background:#7f1d1d;}
+.btn-wa{background:#25d366;color:#fff;border:none;padding:8px 14px;border-radius:var(--radius);font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}.btn-wa:hover{background:#128c7e;}
+.btn-absent{background:#fff;color:var(--danger);border:1px solid var(--danger);padding:8px 14px;border-radius:var(--radius);font-size:12px;font-family:inherit;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}.btn-absent:hover{background:var(--danger-light);}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.pill-pending_pickup{background:var(--yellow-light);color:var(--yellow);}
+.pill-collected{background:var(--blue-light);color:var(--blue);}
+.pill-pending_delivery{background:var(--accent-light);color:var(--accent);}
+.pill-done{background:#dcfce7;color:#166534;}
+.pill-absent{background:var(--danger-light);color:var(--danger);}
+input,select,textarea{width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:9px 12px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;transition:border-color 0.15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,110,86,0.1);}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.maps-btn{display:inline-flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;padding:8px 14px;border-radius:var(--radius);font-size:12px;font-family:inherit;cursor:pointer;font-weight:600;}.maps-btn:hover{background:#1557b0;}
+.local-badge{display:inline-flex;align-items:center;gap:5px;background:#ede9fe;color:#5b21b6;border-radius:var(--radius);padding:4px 10px;font-size:11px;font-weight:600;}
+.local-sug{background:var(--yellow-light);color:var(--yellow);border-radius:var(--radius);padding:4px 10px;font-size:11px;font-weight:600;}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast-el{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.2);animation:toastIn 0.3s ease;}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.notif-banner{position:fixed;top:0;left:0;right:0;z-index:8888;background:var(--accent);color:#fff;padding:12px 20px;text-align:center;font-weight:700;font-size:13px;animation:slideDown 0.4s ease;display:flex;align-items:center;justify-content:center;gap:10px;}
+@keyframes slideDown{from{transform:translateY(-100%);}to{transform:translateY(0);}}
+/* CM LAYOUT */
+.cm-wrap{display:flex;min-height:100vh;}
+.cm-sidebar{width:200px;flex-shrink:0;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;}
+.cm-content{flex:1;overflow-y:auto;min-width:0;}
+.snav-item{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 16px;border:none;background:transparent;font-size:13px;font-family:inherit;cursor:pointer;border-left:3px solid transparent;color:var(--muted);text-align:left;}
+.snav-item.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent);font-weight:700;}
+.snav-item:hover:not(.active){background:#f1f5f9;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+/* MOBILE */
+@media(max-width:700px){
+  .cm-wrap{flex-direction:column;}
+  .cm-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);flex-direction:column;}
+  .cm-sb-logo{padding:10px 14px 6px;}
+  .cm-sb-nav{display:flex;flex-direction:row;overflow-x:auto;padding:4px 8px 8px;gap:4px;}
+  .snav-item{flex-shrink:0;border-left:none!important;border-bottom:2px solid transparent;padding:8px 12px;font-size:12px;border-radius:var(--radius);white-space:nowrap;}
+  .snav-item.active{border-bottom:2px solid var(--accent);}
+  .cm-sb-footer{display:none;}
+  .cm-mob-bar{display:flex!important;padding:8px;border-top:1px solid var(--border);}
+  .g2,.g3,.g4{grid-template-columns:1fr 1fr!important;}
+  .cm-table th:nth-child(n+4),.cm-table td:nth-child(n+4){display:none;}
+}
+@media(min-width:701px){.cm-mob-bar{display:none!important;}}
+.urgent-badge{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;display:inline-flex;align-items:center;gap:4px;}
+.btn-urgent{background:#dc2626;color:#fff;border-color:#dc2626;}.btn-urgent:hover{background:#b91c1c;}
+.search-input{width:100%;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:9px 12px 9px 36px;border-radius:var(--radius);font-size:13px;font-family:inherit;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;}
+.progress-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin-top:6px;}
+.progress-fill{height:100%;border-radius:4px;}
+.popup-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;}
+.popup-box{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:popupIn 0.2s ease;}
+@keyframes popupIn{from{opacity:0;transform:scale(0.95);}to{opacity:1;transform:scale(1);}}
+.order-card{transition:opacity 0.2s,transform 0.2s;}
+.order-card.dragging{opacity:0.4;transform:scale(0.98);}
+.order-card.drag-over{border-top:3px solid var(--accent)!important;}
+
+
+
+</style>
+</head>
+<body>
+<div id="app" style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+  <div style="text-align:center;"><div class="spinner" style="width:32px;height:32px;margin:0 auto 12px;"></div><div style="color:var(--muted);font-size:13px;">Chargement…</div></div>
+</div>
+<div id="toast-ct"></div>
+<div id="notif-ct"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyBptr40yp0rUmK7hNxfjUfJI42KWTDiI1s",
+  authDomain:"blanchiexpress.firebaseapp.com",
+  projectId:"blanchiexpress",
+  storageBucket:"blanchiexpress.firebasestorage.app",
+  messagingSenderId:"614689054040",
+  appId:"1:614689054040:web:fbaf0900585642d59e592d"
+});
+const db=firebase.firestore();
+
+const LOCAUX=[
+  {id:"tng1",city:"Tanger",name:"Birchiffae"},
+  {id:"tng2",city:"Tanger",name:"Homa Lhaddad"},
+  {id:"tng3",city:"Tanger",name:"Hay Benkirane"},
+  {id:"tng4",city:"Tanger",name:"Bokhalef Irfan 1"},
+  {id:"tng5",city:"Tanger",name:"Aouama Allo Tapis"},
+  {id:"cas1",city:"Casablanca",name:"Anassi"},
+];
+
+const SOCIETES=["Laundry Service","Allo Tapis"];
+
+let S={
+  screen:"login",loginError:"",loginUser:"",loginPass:"",
+  role:null,driverName:"",initials:"",driverId:"",
+  orders:[],drivers:[],clients:[],
+  cmTab:"dashboard",driverTab:"orders",
+  statsFilter:{driver:"",status:"",period:"today"},
+  showForm:false,showDriverForm:false,showClientForm:false,showDriverOrderForm:false,showRelanceForm:false,relanceOrderId:null,relanceDriverId:"",
+  editingSlot:null,editingLocal:null,editingNotes:null,editOrderId:null,
+  localPopup:null,localSelected:"",
+  absentPopup:null,absentReason:"",
+  editDriverId:null,
+  form:{name:"",phone:"",pickupAddr:"",mapsLink:"",pickupTime:"",notes:"",driver:"",suggestedLocal:"",societe:"",urgent:false},searchOrders:"",searchClients:"",
+  driverForm:{name:"",password:""},
+  clientForm:{name:"",phone:"",address:"",notes:""},
+  driverOrderForm:{name:"",phone:"",pickupAddr:"",mapsLink:"",pickupTime:"",notes:"",societe:""},
+  unsubOrders:null,unsubDrivers:null,unsubClients:null,dragOrder:null,dragOverOrder:null,
+  knownIds:new Set(),firstLoad:true,
+};
+
+/* FIREBASE */
+function startListening(){
+  if(S.unsubOrders) S.unsubOrders();
+  if(S.unsubDrivers) S.unsubDrivers();
+  if(S.unsubClients) S.unsubClients();
+  S.unsubOrders=db.collection("orders").orderBy("createdAt","desc").onSnapshot(snap=>{
+    if(!S.firstLoad&&S.role==="driver"){
+      snap.docChanges().forEach(ch=>{
+        if(ch.type==="added"){
+          const o={id:ch.doc.id,...ch.doc.data()};
+          if(o.driver===S.driverName&&!S.knownIds.has(o.id)){
+            showNotif("🔔 Nouvelle commande : "+o.name);playBeep();
+          }
+        }
+      });
+    }
+    S.orders=snap.docs.map(d=>({id:d.id,...d.data()}));
+    S.orders.forEach(o=>S.knownIds.add(o.id));
+    S.firstLoad=false;render();
+  },e=>showToast("⚠️ "+e.message));
+  S.unsubDrivers=db.collection("drivers").orderBy("name").onSnapshot(snap=>{S.drivers=snap.docs.map(d=>({id:d.id,...d.data()}));render();});
+  S.unsubClients=db.collection("clients").orderBy("name").onSnapshot(snap=>{S.clients=snap.docs.map(d=>({id:d.id,...d.data()}));render();});
+}
+function stopListening(){
+  ["unsubOrders","unsubDrivers","unsubClients"].forEach(k=>{if(S[k]){S[k]();S[k]=null;}});
+  S.firstLoad=true;S.knownIds=new Set();
+}
+async function fbAdd(col,data){try{return await db.collection(col).add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){showToast("⚠️ "+e.message);throw e;}}
+async function fbUpd(col,id,patch){try{await db.collection(col).doc(id).update({...patch,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){showToast("⚠️ "+e.message);throw e;}}
+async function fbDel(col,id){try{await db.collection(col).doc(id).delete();}catch(e){showToast("⚠️ "+e.message);}}
+
+/* HELPERS */
+function set(patch){Object.assign(S,patch);render();}
+function showToast(msg){const el=document.createElement("div");el.className="toast-el";el.textContent=msg;document.getElementById("toast-ct").appendChild(el);setTimeout(()=>el.remove(),3000);}
+function showNotif(msg){
+  if(Notification.permission==="granted") new Notification("Laundry Service",{body:msg});
+  const el=document.createElement("div");el.className="notif-banner";
+  el.innerHTML=`<span>${msg}</span><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,0.25);border:none;color:#fff;padding:4px 10px;border-radius:8px;cursor:pointer;margin-left:10px;">✕</button>`;
+  document.getElementById("notif-ct").appendChild(el);setTimeout(()=>el&&el.remove(),6000);
+}
+function playBeep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);o.start();o.stop(ctx.currentTime+0.5);}catch(e){}}
+function reqNotif(){if("Notification"in window&&Notification.permission==="default")Notification.requestPermission();}
+function openMaps(addr,link){window.open((link&&link.startsWith("http"))?link:"https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(addr)+"&travelmode=driving","_blank");}
+function openWA(phone,name,addr,societe){
+  const c=phone.replace(/\s+/g,"").replace(/^0/,"212");
+  const s=societe||"notre service";
+  window.open(`https://wa.me/${c}?text=${encodeURIComponent(`Bonjour ${name} 👋, je suis votre livreur de ${s}. Je viens récupérer votre commande à : ${addr}`)}`,"_blank");
+}
+function fmtDt(ts){if(!ts)return "—";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+function fmtD(ts){if(!ts)return "—";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});}
+const SL={pending_pickup:"En attente",collected:"Ramassé ✓",pending_delivery:"Prêt à livrer",done:"Livré ✓",absent:"Client absent"};
+function sl(s){return SL[s]||s;}
+function spc(s){return "pill-"+(s||"pending_pickup");}
+function localSel(sel,onch,empty=true){
+  const t=LOCAUX.filter(l=>l.city==="Tanger"),c=LOCAUX.filter(l=>l.city==="Casablanca");
+  return `<select onchange="${onch}">${empty?`<option value="">— Choisir —</option>`:""}<optgroup label="📍 Tanger">${t.map(l=>`<option value="${l.name}" ${sel===l.name?"selected":""}>${l.name}</option>`).join("")}</optgroup><optgroup label="📍 Casablanca">${c.map(l=>`<option value="${l.name}" ${sel===l.name?"selected":""}>${l.name}</option>`).join("")}</optgroup></select>`;
+}
+function socSel(val,onch){return `<select onchange="${onch}"><option value="">— Choisir —</option>${SOCIETES.map(s=>`<option value="${s}" ${val===s?"selected":""}>${s}</option>`).join("")}</select>`;}
+function waBtn(o,addr){return `<button class="btn-wa" onclick="openWA('${(o.phone||"").replace(/'/g,"\\'")}','${o.name.replace(/'/g,"\\'")}','${addr.replace(/'/g,"\\'")}','${(o.societe||"").replace(/'/g,"\\'")}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp</button>`;}
+
+
+function fmtDt(ts){if(!ts)return"—";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+function fmtD(ts){if(!ts)return"—";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"});}
+function diffH(t1,t2){if(!t1||!t2)return null;const d1=t1.toDate?t1.toDate():new Date(t1);const d2=t2.toDate?t2.toDate():new Date(t2);return Math.round(Math.abs(d2-d1)/36e5*10)/10;}
+function openFullRoute(addrs){if(!addrs||!addrs.length)return;if(addrs.length===1){window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(addrs[0])+"&travelmode=driving","_blank");return;}const dest=encodeURIComponent(addrs[addrs.length-1]);const wps=addrs.slice(0,-1).map(a=>encodeURIComponent(a)).join("|");window.open("https://www.google.com/maps/dir/?api=1&destination="+dest+"&waypoints="+wps+"&travelmode=driving","_blank");}
+async function saveClientAutomatic(name,phone,addr,mlink){if(!phone&&!name)return;try{const q=await db.collection("clients").where("phone","==",phone).limit(1).get();if(q.empty)await db.collection("clients").add({name,phone,address:addr,mapsLink:mlink||"",notes:"",createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}}
+
+function render(){document.getElementById("app").innerHTML=buildApp();}
+
+
+/* Drag & Drop pour réordonner les commandes */
+function dragStart(e,id){
+  S.dragOrder=id;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>{const el=document.getElementById('card-'+id);if(el)el.classList.add('dragging');},0);
+}
+function dragOver(e,id){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  if(S.dragOverOrder!==id){
+    if(S.dragOverOrder){const el=document.getElementById('card-'+S.dragOverOrder);if(el)el.classList.remove('drag-over');}
+    S.dragOverOrder=id;
+    const el=document.getElementById('card-'+id);if(el)el.classList.add('drag-over');
+  }
+}
+function dragEnd(e,id){
+  const el=document.getElementById('card-'+id);if(el){el.classList.remove('dragging');el.classList.remove('drag-over');}
+  if(S.dragOverOrder){const el2=document.getElementById('card-'+S.dragOverOrder);if(el2)el2.classList.remove('drag-over');}
+  if(S.dragOrder&&S.dragOverOrder&&S.dragOrder!==S.dragOverOrder){
+    /* Sauvegarder le nouvel ordre dans Firebase */
+    const fromId=S.dragOrder,toId=S.dragOverOrder;
+    const fromOrder=S.orders.find(x=>x.id===fromId);
+    const toOrder=S.orders.find(x=>x.id===toId);
+    if(fromOrder&&toOrder){
+      const fromPos=fromOrder.position||0;
+      const toPos=toOrder.position||0;
+      fbUpd('orders',fromId,{position:toPos});
+      fbUpd('orders',toId,{position:fromPos});
+    }
+  }
+  S.dragOrder=null;S.dragOverOrder=null;
+}
+
+function renderSearch(inputEl){
+  /* Garde la valeur et la position du curseur pendant le re-render */
+  const val = inputEl.value;
+  const id = inputEl.id;
+  const selStart = inputEl.selectionStart;
+  const selEnd = inputEl.selectionEnd;
+  render();
+  /* Restaure le focus et la position du curseur */
+  const newEl = document.getElementById(id);
+  if(newEl){
+    newEl.focus();
+    try{newEl.setSelectionRange(selStart, selEnd);}catch(e){}
+  }
+}
+
+function buildApp(){if(S.screen==="login")return buildLogin();if(S.role==="cm")return buildCM();return buildDriver();}
+
+/* LOGIN */
+function buildLogin(){return `<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;background:linear-gradient(135deg,#f0fdf4,#f8fafc);">
+  <div style="font-size:26px;font-weight:800;margin-bottom:4px;">🧺 Laundry Service</div>
+  <div style="font-size:14px;color:var(--accent);font-weight:700;margin-bottom:4px;">Livraison App</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:36px;">Connectez-vous à votre espace</div>
+  <div style="width:100%;max-width:360px;">
+    <div class="card" style="padding:28px;">
+      <div style="font-weight:700;font-size:16px;margin-bottom:20px;">Connexion</div>
+      <div style="margin-bottom:14px;"><label>Identifiant</label><input id="li-u" placeholder="Votre identifiant" value="${S.loginUser}" oninput="S.loginUser=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div style="margin-bottom:16px;"><label>Mot de passe</label><input type="password" id="li-p" placeholder="••••••••" value="${S.loginPass}" oninput="S.loginPass=this.value" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      ${S.loginError?`<div style="color:var(--danger);font-size:12px;margin-bottom:12px;padding:8px 12px;background:var(--danger-light);border-radius:var(--radius);">⚠️ ${S.loginError}</div>`:""}
+      <button class="btn btn-green" style="width:100%;padding:12px;font-size:14px;font-weight:700;" onclick="doLogin()">Se connecter →</button>
+    </div>
+  </div>
+</div>`;}
+
+function doLogin(){
+  /* Lire depuis DOM en priorité, fallback sur state */
+  const uEl=document.getElementById("li-u");
+  const pEl=document.getElementById("li-p");
+  const u=(uEl?uEl.value:S.loginUser).trim().toLowerCase();
+  const p=(pEl?pEl.value:S.loginPass).trim();
+
+  db.collection("drivers").get().then(snap=>{
+    S.drivers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(u==="cm"&&p==="cm1234"){
+      S.screen="app";S.role="cm";S.loginError="";S.cmTab="dashboard";
+      render();reqNotif();
+      setTimeout(()=>{try{startListening();}catch(e){}},300);
+      return;
+    }
+    const drv=S.drivers.find(d=>d.id===u&&d.password===p);
+    if(drv){
+      S.screen="app";S.role="driver";S.driverName=drv.name;
+      S.initials=drv.initials||drv.name.split(" ").map(w=>w[0]).join("").toUpperCase();
+      S.driverId=drv.id;S.loginError="";
+      render();reqNotif();
+      setTimeout(()=>{try{startListening();}catch(e){}},300);
+    }
+    else set({loginError:"Identifiant ou mot de passe incorrect."});
+  }).catch(()=>set({loginError:"Erreur de connexion. Réessayez."}));
+}
+
+function logout(){stopListening();set({screen:"login",role:null,loginUser:"",loginPass:"",loginError:"",localPopup:null,absentPopup:null,showForm:false,showDriverForm:false,showClientForm:false,showDriverOrderForm:false,showRelanceForm:false,relanceOrderId:null,relanceDriverId:"",orders:[],drivers:[],clients:[]});}
+
+/* CM */
+function buildCM(){
+  const o=S.orders;
+  const cnt={total:o.length,pickup:o.filter(x=>x.status==="pending_pickup").length,active:o.filter(x=>["collected","pending_delivery"].includes(x.status)).length,done:o.filter(x=>x.status==="done").length,absent:o.filter(x=>x.status==="absent").length};
+  const sidebar=`<div class="cm-sidebar">
+    <div class="cm-sb-logo" style="padding:16px 16px 12px;border-bottom:1px solid var(--border);">
+      <div style="font-size:15px;font-weight:800;">🧺 Laundry Service</div>
+      <div style="font-size:11px;color:var(--accent);font-weight:700;">Livraison App — Manager</div>
+    </div>
+    <div class="cm-sb-nav" style="flex:1;padding:8px 0;">
+      ${[{k:"dashboard",l:"📊 Dashboard",b:null},{k:"orders",l:"📋 Commandes",b:cnt.pickup},{k:"clients",l:"👥 Clients",b:null},{k:"drivers",l:"👤 Livreurs",b:null},{k:"stats",l:"📈 Statistiques",b:null}].map(t=>`
+      <button class="snav-item ${S.cmTab===t.k?"active":""}" onclick="setCmTab('${t.k}')">
+        <span>${t.l}</span>${t.b>0?`<span style="background:var(--orange);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;">${t.b}</span>`:""}
+      </button>`).join("")}
+    </div>
+    <div class="cm-sb-footer" style="padding:12px 16px;border-top:1px solid var(--border);">
+      <button class="btn" style="width:100%;font-size:12px;" onclick="logout()">← Déconnexion</button>
+    </div>
+    <div class="cm-mob-bar" style="display:none;padding:8px;border-top:1px solid var(--border);">
+      <button class="btn" style="width:100%;font-size:12px;" onclick="logout()">← Déconnexion</button>
+    </div>
+  </div>`;
+
+  let main="";
+
+  if(S.cmTab==="dashboard"){
+    main=`<div style="padding:20px;">
+      <div style="font-weight:800;font-size:20px;margin-bottom:4px;">Bonjour 👋</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
+      <div class="g4" style="margin-bottom:20px;">
+        ${[{v:cnt.total,l:"Total",c:"var(--accent)",bg:"var(--accent-light)"},{v:cnt.pickup,l:"À ramasser",c:"var(--orange)",bg:"var(--orange-light)"},{v:cnt.active,l:"En cours",c:"var(--blue)",bg:"var(--blue-light)"},{v:cnt.done,l:"Terminées",c:"#166534",bg:"#dcfce7"}].map(s=>`
+        <div style="background:${s.bg};border-radius:var(--radius-lg);padding:16px;">
+          <div style="font-size:30px;font-weight:800;color:${s.c};line-height:1;">${s.v}</div>
+          <div style="font-size:11px;color:${s.c};margin-top:5px;font-weight:600;text-transform:uppercase;opacity:0.8;">${s.l}</div>
+        </div>`).join("")}
+      </div>
+      <div class="card">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <span style="font-weight:700;font-size:15px;">Commandes récentes</span>
+          <button class="btn btn-green" onclick="openForm()">+ Nouvelle commande</button>
+        </div>
+        ${cmTbl(o.slice(0,8))}
+      </div>
+    </div>`;}
+
+  else if(S.cmTab==="orders"){
+    const qo=S.searchOrders.toLowerCase();
+    const ford=qo?o.filter(x=>(x.name&&x.name.toLowerCase().includes(qo))||(x.phone&&x.phone.includes(qo))||(x.pickupAddr&&x.pickupAddr.toLowerCase().includes(qo))||(x.driver&&x.driver.toLowerCase().includes(qo))):o;
+    main=`<div style="padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+        <div><div style="font-weight:800;font-size:18px;">Commandes</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">${o.length} total · ${cnt.pickup} en attente · ${cnt.absent} absences</div></div>
+        <button class="btn btn-green" onclick="openForm()">+ Nouvelle commande</button>
+      </div>
+      <div style="position:relative;margin-bottom:14px;"><input class="search-input" placeholder="Rechercher nom, téléphone, adresse, livreur…" id="search-orders" value="${S.searchOrders}" oninput="S.searchOrders=this.value;renderSearch(this)"></div>
+      <div class="card">${cmTbl(ford)}</div>
+    </div>`;}
+
+  else if(S.cmTab==="clients"){
+    const qc=S.searchClients.toLowerCase();
+    const fcl=qc?S.clients.filter(x=>(x.name&&x.name.toLowerCase().includes(qc))||(x.phone&&x.phone.includes(qc))||(x.address&&x.address.toLowerCase().includes(qc))):S.clients;
+    main=`<div style="padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+        <div><div style="font-weight:800;font-size:18px;">Clients</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">${S.clients.length} client(s) enregistré(s)</div></div>
+        <button class="btn btn-green" onclick="openClientForm()">+ Nouveau client</button>
+      </div>
+      <div style="position:relative;margin-bottom:14px;"><input class="search-input" placeholder="Rechercher clients…" id="search-clients" value="${S.searchClients}" oninput="S.searchClients=this.value;renderSearch(this)"></div>
+      ${S.showClientForm?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:16px;">➕ Nouveau client</div>
+        <div class="g2" style="margin-bottom:12px;">
+          <div><label>Nom *</label><input placeholder="Marie Dupont" oninput="S.clientForm.name=this.value" value="${S.clientForm.name}"></div>
+          <div><label>Téléphone</label><input placeholder="06 xx xx xx xx" oninput="S.clientForm.phone=this.value" value="${S.clientForm.phone}"></div>
+        </div>
+        <div style="margin-bottom:12px;"><label>Adresse</label><input placeholder="Ex: 12 Rue des Lilas, Tanger" oninput="S.clientForm.address=this.value" value="${S.clientForm.address}"></div>
+        <div style="margin-bottom:16px;"><label>Notes</label><input placeholder="Client régulier, préfère le matin..." oninput="S.clientForm.notes=this.value" value="${S.clientForm.notes}"></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn" onclick="set({showClientForm:false})">Annuler</button>
+          <button class="btn btn-green" style="flex:1;padding:11px;font-weight:700;" onclick="submitClient()">✓ Enregistrer</button>
+        </div>
+      </div>`:""}
+      <div class="card">
+        ${fcl.length===0?`<div style="padding:32px;text-align:center;color:var(--muted);">${S.searchClients?"Aucun résultat":"Aucun client enregistré"}</div>`:""}
+        ${fcl.map((c,i)=>{
+          const nc=S.orders.filter(x=>x.phone&&x.phone===c.phone).length;
+          return `<div style="display:flex;align-items:flex-start;gap:12px;padding:16px;${i<fcl.length-1?"border-bottom:1px solid var(--border);":""}flex-wrap:wrap;">
+            <div style="width:42px;height:42px;border-radius:12px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--accent);flex-shrink:0;">${c.name[0].toUpperCase()}</div>
+            <div style="flex:1;min-width:140px;">
+              <div style="font-weight:700;font-size:14px;">${c.name}</div>
+              <div style="font-size:12px;color:var(--muted);">📞 ${c.phone||"—"}</div>
+              <div style="font-size:12px;color:var(--muted);">📍 ${c.address||"—"}</div>
+              ${c.notes?`<div style="font-size:12px;color:var(--muted);">📝 ${c.notes}</div>`:""}
+              <div style="font-size:11px;color:var(--accent);margin-top:4px;font-weight:600;">${nc} commande(s)</div>
+            </div>
+            <button class="btn btn-red" style="font-size:12px;padding:6px 12px;" onclick="deleteClient('${c.id}','${c.name}')">🗑</button>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;}
+
+  else if(S.cmTab==="drivers"){
+    main=`<div style="padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div style="font-weight:800;font-size:18px;">Livreurs</div>
+        <button class="btn btn-green" onclick="openDriverForm(null)">+ Nouveau livreur</button>
+      </div>
+      ${S.showDriverForm?`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:16px;">${S.editDriverId?"✏️ Modifier":"➕ Nouveau livreur"}</div>
+        <div class="g2" style="margin-bottom:12px;">
+          <div><label>Nom complet *</label><input placeholder="Ex: Karim Alami" oninput="S.driverForm.name=this.value" value="${S.driverForm.name}"></div>
+          <div><label>Mot de passe *</label><input placeholder="Ex: karim123" oninput="S.driverForm.password=this.value" value="${S.driverForm.password}"></div>
+        </div>
+        <div style="background:var(--accent-light);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--accent);">ℹ️ Identifiant = prénom en minuscules. Ex: "Karim Alami" → <strong>karim</strong></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn" onclick="closeDriverForm()">Annuler</button>
+          <button class="btn btn-green" style="flex:1;padding:11px;font-weight:700;" onclick="submitDriver()">${S.editDriverId?"✓ Enregistrer":"✓ Créer"}</button>
+        </div>
+      </div>`:""}
+      <div class="card">
+        ${S.drivers.length===0?`<div style="padding:32px;text-align:center;color:var(--muted);">Aucun livreur</div>`:""}
+        ${S.drivers.map((d,i)=>{
+          const ac=S.orders.filter(x=>x.driver===d.name&&!["done","absent"].includes(x.status)).length;
+          const dn=S.orders.filter(x=>x.driver===d.name&&x.status==="done").length;
+          return `<div style="display:flex;align-items:center;gap:12px;padding:16px;${i<S.drivers.length-1?"border-bottom:1px solid var(--border);":""}flex-wrap:wrap;">
+            <div style="width:42px;height:42px;border-radius:12px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--accent);">${d.initials||d.name[0]}</div>
+            <div style="flex:1;min-width:120px;">
+              <div style="font-weight:700;font-size:14px;">${d.name}</div>
+              <div style="font-size:12px;color:var(--muted);">ID: <strong>${d.id}</strong> · ${ac} active(s) · ${dn} terminée(s)</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" style="font-size:12px;padding:6px 12px;" onclick="openDriverForm('${d.id}')">✏️</button>
+              <button class="btn btn-red" style="font-size:12px;padding:6px 12px;" onclick="deleteDriver('${d.id}','${d.name}')">🗑</button>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;}
+
+  else if(S.cmTab==="stats"){
+    const sf=S.statsFilter;
+    let fil=S.orders;
+    if(sf.driver) fil=fil.filter(x=>x.driver===sf.driver);
+    if(sf.status) fil=fil.filter(x=>x.status===sf.status);
+    if(sf.period!=="all"){
+      const days={today:0,week:7,month:30}[sf.period]||0;
+      const cut=new Date();cut.setDate(cut.getDate()-days);cut.setHours(0,0,0,0);
+      fil=fil.filter(x=>x.createdAt&&x.createdAt.toDate&&x.createdAt.toDate()>=cut);
+    }
+    main=`<div style="padding:20px;">
+      <div style="font-weight:800;font-size:18px;margin-bottom:20px;">📈 Statistiques</div>
+      <div class="card" style="padding:16px;margin-bottom:20px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px;">🔎 Filtres</div>
+        <div class="g3">
+          <div><label>Période</label><select onchange="S.statsFilter.period=this.value;render()">
+            ${[["today","Aujourd'hui"],["week","7 derniers jours"],["month","30 derniers jours"],["all","Tout"]].map(([v,l])=>`<option value="${v}" ${sf.period===v?"selected":""}>${l}</option>`).join("")}
+          </select></div>
+          <div><label>Livreur</label><select onchange="S.statsFilter.driver=this.value;render()">
+            <option value="">Tous</option>${S.drivers.map(d=>`<option value="${d.name}" ${sf.driver===d.name?"selected":""}>${d.name}</option>`).join("")}
+          </select></div>
+          <div><label>Statut</label><select onchange="S.statsFilter.status=this.value;render()">
+            <option value="">Tous</option>${Object.entries(SL).map(([k,v])=>`<option value="${k}" ${sf.status===k?"selected":""}>${v}</option>`).join("")}
+          </select></div>
+        </div>
+      </div>
+      <div class="g4" style="margin-bottom:20px;">
+        ${[{v:fil.length,l:"Total filtré",c:"var(--accent)",bg:"var(--accent-light)"},{v:fil.filter(x=>x.status==="done").length,l:"Terminées",c:"#166534",bg:"#dcfce7"},{v:fil.filter(x=>x.status==="absent").length,l:"Absences",c:"var(--danger)",bg:"var(--danger-light)"},{v:fil.filter(x=>x.status==="pending_pickup").length,l:"En attente",c:"var(--orange)",bg:"var(--orange-light)"}].map(s=>`
+        <div style="background:${s.bg};border-radius:var(--radius-lg);padding:16px;">
+          <div style="font-size:30px;font-weight:800;color:${s.c};line-height:1;">${s.v}</div>
+          <div style="font-size:11px;color:${s.c};margin-top:5px;font-weight:600;text-transform:uppercase;opacity:0.8;">${s.l}</div>
+        </div>`).join("")}
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;">Par livreur</div>
+        ${S.drivers.map(d=>{
+          const dr=fil.filter(x=>x.driver===d.name);
+          const dd=dr.filter(x=>x.status==="done").length;
+          const da=dr.filter(x=>x.status==="absent").length;
+          const pct=dr.length>0?Math.round(dd/dr.length*100):0;
+          return `<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent);">${d.initials||d.name[0]}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${d.name}</div>
+              <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;"></div></div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:13px;font-weight:700;color:var(--accent);">${dd}/${dr.length}</div>
+              <div style="font-size:11px;color:var(--danger);">${da} absent(s)</div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="card">${fil.length===0?`<div style="padding:32px;text-align:center;color:var(--muted);">Aucune commande avec ces filtres</div>`:cmTbl(fil)}</div>
+    </div>`;}
+
+  const f=S.form;
+  const f2=S.form;
+  const formTitle=S.editOrderId?"✏️ Modifier la commande":"➕ Nouvelle commande";
+  const formActionBtn=S.editOrderId?"✓ Enregistrer les modifications":"✓ Créer et assigner";
+  const formAction=S.editOrderId?"updateOrder()":"submitOrder()";
+
+  const formHTML=(S.showForm||S.editOrderId)?`<div class="popup-overlay" onclick="if(event.target===this)closeForm()">
+    <div class="popup-box">
+    <div style="max-width:580px;margin:0 auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <div><div style="font-weight:800;font-size:17px;">${formTitle}</div><div style="font-size:12px;color:var(--muted);">* obligatoires</div></div>
+        <button class="btn" onclick="closeForm()" style="font-size:18px;padding:6px 12px;">✕</button>
+      </div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div><label>Nom du client *</label><input placeholder="Marie Dupont" oninput="S.form.name=this.value" value="${f2.name}"></div>
+        <div><label>Téléphone WhatsApp *</label><input placeholder="06 xx xx xx xx" oninput="S.form.phone=this.value" value="${f2.phone}"></div>
+      </div>
+      <div style="margin-bottom:12px;"><label>Société (message WhatsApp) *</label>${socSel(f.societe,"S.form.societe=this.value")}</div>
+      <div style="background:var(--blue-light);border:1px solid #bfdbfe;border-radius:var(--radius-lg);padding:14px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:10px;">📦 RAMASSAGE</div>
+        <div style="margin-bottom:10px;"><label>Adresse pick-up *</label><input placeholder="Ex: Hay Saddam, Tanger" oninput="S.form.pickupAddr=this.value" value="${f2.pickupAddr}"></div>
+        <div class="g2">
+          <div><label>Lien Google Maps</label><input placeholder="https://maps.app.goo.gl/..." oninput="S.form.mapsLink=this.value" value="${f2.mapsLink}"></div>
+          <div><label>Créneau</label><input placeholder="Ex: 10h00-12h00" oninput="S.form.pickupTime=this.value" value="${f2.pickupTime}"></div>
+        </div>
+      </div>
+      <div style="background:var(--yellow-light);border:1px solid #fde68a;border-radius:var(--radius-lg);padding:14px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:6px;">🏪 Local suggéré</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Le livreur peut modifier ce choix au moment du ramassage.</div>
+        ${localSel(f.suggestedLocal,"S.form.suggestedLocal=this.value")}
+      </div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div><label>Assigner à *</label><select onchange="S.form.driver=this.value"><option value="">— Choisir —</option>${S.drivers.map(d=>`<option value="${d.name}" ${f2.driver===d.name?"selected":""}>${d.name}</option>`).join("")}</select></div>
+        <div><label>Notes spéciales</label><input placeholder="Ex: 2 sacs, couette..." oninput="S.form.notes=this.value" value="${f2.notes}"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:${f2.urgent?"var(--urgent-light,#fef2f2)":"var(--bg)"};border:1px solid ${f2.urgent?"#fca5a5":"var(--border)"};border-radius:var(--radius);margin-bottom:14px;cursor:pointer;" onclick="S.form.urgent=!S.form.urgent;render()">
+        <div style="width:20px;height:20px;border-radius:4px;border:2px solid ${f2.urgent?"#dc2626":"var(--border)"};background:${f2.urgent?"#dc2626":"transparent"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${f2.urgent?`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`:""}</div>
+        <div><div style="font-weight:700;font-size:13px;color:${f2.urgent?"#dc2626":"var(--text)"};">🔴 Commande urgente</div><div style="font-size:11px;color:var(--muted);">Le livreur verra un badge URGENT</div></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="closeForm()">Annuler</button>
+        <button class="btn btn-green" style="flex:1;padding:12px;font-size:14px;font-weight:700;" onclick="${formAction}">${formActionBtn}</button>
+      </div>
+    </div>
+  </div></div>`:"";
+
+  const relanceHTML=S.showRelanceForm?`<div class="popup-overlay" onclick="if(event.target===this)set({showRelanceForm:false,relanceOrderId:null})">
+  <div class="popup-box" style="max-width:480px;">
+    <div style="max-width:480px;margin:0 auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div style="font-weight:800;font-size:17px;">🔄 Relancer la commande</div><button class="btn" onclick="set({showRelanceForm:false,relanceOrderId:null})">✕</button></div>
+      <div style="background:var(--yellow-light);border:1px solid #fde68a;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--yellow);">ℹ️ La commande sera remise en statut "En attente" et réassignée au livreur choisi.</div>
+      <div style="margin-bottom:16px;"><label>Réassigner à *</label><select onchange="S.relanceDriverId=this.value"><option value="">— Choisir —</option>${S.drivers.map(d=>`<option value="${d.name}" ${S.relanceDriverId===d.name?"selected":""}>${d.name}</option>`).join("")}</select></div>
+      <div style="display:flex;gap:10px;"><button class="btn" onclick="set({showRelanceForm:false,relanceOrderId:null})">Annuler</button><button class="btn btn-green" style="flex:1;padding:11px;font-weight:700;" onclick="confirmRelance()">✓ Relancer</button></div>
+    </div>
+  </div>  </div>`:"";
+
+    return `<div class="cm-wrap">${sidebar}<div class="cm-content">${main}${formHTML}${relanceHTML}</div></div>`;}
+
+function cmTbl(orders){
+  if(orders.length===0) return `<div style="text-align:center;padding:40px;color:var(--muted);">Aucune commande</div>`;
+  return `<div style="overflow-x:auto;"><table class="cm-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:var(--bg);">${["Client","Adresse","Livreur","Local","Statut","Créée","📦 Ramassée",""].map(h=>`<th style="padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);font-weight:700;white-space:nowrap;">${h}</th>`).join("")}</tr></thead>
+    <tbody>${orders.map(o=>`<tr style="border-top:1px solid var(--border);">
+      <td style="padding:11px 14px;${o.urgent&&o.status!=='done'?'background:#fff9f9;':''}">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;"><span style="font-weight:700;">${o.name}</span>${o.urgent&&o.status!=="done"?`<span class="urgent-badge">🔴 urgent</span>`:""}</div>
+        <div style="font-size:11px;color:var(--muted);">${o.phone||""}</div>
+        ${o.societe?`<div style="font-size:10px;color:var(--accent);font-weight:600;">${o.societe}</div>`:""}
+        <div style="font-size:10px;color:var(--muted);">${fmtD(o.createdAt)}</div>
+      </td>
+      <td style="padding:11px 14px;color:var(--muted);max-width:130px;"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.pickupAddr||""}</div></td>
+      <td style="padding:11px 14px;"><div style="display:flex;align-items:center;gap:5px;"><div style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;"></div>${o.driver||""}</div></td>
+      <td style="padding:11px 14px;">${o.local?`<span class="local-badge" style="font-size:10px;">🏪 ${o.local}</span>`:o.suggestedLocal?`<span class="local-sug">💡 ${o.suggestedLocal}</span>`:`<span style="color:var(--muted);">—</span>`}</td>
+      <td style="padding:11px 14px;"><span class="pill ${spc(o.status)}">${sl(o.status)}</span>${o.absentReason?`<div style="font-size:10px;color:var(--danger);margin-top:3px;">⚠️ ${o.absentReason}</div>`:""}</td>
+      <td style="padding:11px 14px;font-size:11px;color:var(--muted);white-space:nowrap;">${fmtD(o.createdAt)}</td>
+      <td style="padding:11px 14px;font-size:11px;white-space:nowrap;">
+        ${o.collectedAt
+          ? `<div style="color:var(--blue);font-weight:600;">${fmtD(o.collectedAt)}</div><div style="font-size:10px;color:var(--muted);">${fmtDt(o.collectedAt).split(' ')[1]||''}</div>`
+          : `<span style="color:var(--muted);">—</span>`}
+      </td>
+      <td style="padding:11px 14px;">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button onclick="openEditOrder('${o.id}')" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:var(--radius);cursor:pointer;font-size:12px;" title="Modifier">✏️</button>
+          ${o.status==="absent"?`<button onclick="openRelance('${o.id}')" style="background:#e0f2fe;border:1px solid #93c5fd;color:#185fa5;padding:4px 8px;border-radius:var(--radius);cursor:pointer;font-size:11px;font-weight:700;">🔄</button>`:""}
+          <button onclick="deleteCmOrder('${o.id}')" style="background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:var(--radius);cursor:pointer;">✕</button>
+        </div>
+      </td>
+    </tr>`).join("")}</tbody>
+  </table></div>`;}
+
+/* DRIVER */
+function dHeader(){return `<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+  <div><div style="font-size:15px;font-weight:800;">🧺 Laundry Service</div><div style="font-size:11px;color:var(--accent);font-weight:700;">Livraison App</div></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div style="background:var(--accent-light);padding:5px 12px 5px 8px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;color:var(--accent);">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;">${S.initials}</div>
+      ${S.driverName}<div style="width:6px;height:6px;border-radius:50%;background:#22c55e;"></div>
+    </div>
+    <button class="btn" style="padding:6px 10px;font-size:12px;" onclick="logout()">←</button>
+  </div>
+</div>`;}
+
+function buildDriver(){
+  if(S.localPopup){const o=S.orders.find(x=>x.id===S.localPopup);return `<div style="display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;">${dHeader()}<div style="flex:1;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:380px;">
+      <div style="text-align:center;font-size:32px;margin-bottom:12px;">🏪</div>
+      <div style="font-weight:800;font-size:17px;text-align:center;margin-bottom:6px;">Dans quel local déposez-vous ?</div>
+      <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px;">Client : <strong>${o?o.name:""}</strong></div>
+      ${o&&o.suggestedLocal?`<div style="background:var(--yellow-light);border:1px solid #fde68a;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;font-size:12px;font-weight:600;color:var(--yellow);">💡 Suggéré : ${o.suggestedLocal}</div>`:""}
+      <label>Confirmer ou changer *</label>
+      ${localSel(S.localSelected||(o&&o.suggestedLocal)||"","S.localSelected=this.value")}
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 20px;">ℹ️ Visible par le Community Manager.</div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="set({localPopup:null,localSelected:''})" style="flex:1;">Annuler</button>
+        <button class="btn btn-orange" onclick="confirmLocal()" style="flex:2;font-weight:700;">✓ Confirmer — Récupéré</button>
+      </div>
+    </div>
+  </div></div>`;}
+
+  if(S.absentPopup){const o=S.orders.find(x=>x.id===S.absentPopup);return `<div style="display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;">${dHeader()}<div style="flex:1;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:380px;">
+      <div style="text-align:center;font-size:32px;margin-bottom:12px;">🚫</div>
+      <div style="font-weight:800;font-size:17px;text-align:center;margin-bottom:6px;">Client non disponible</div>
+      <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px;">Client : <strong>${o?o.name:""}</strong></div>
+      <label>Motif *</label>
+      <select id="absent-sel" style="margin-bottom:10px;" onchange="S.absentReason=this.value">
+        <option value="">— Choisir —</option>
+        ${["Client absent — personne n'a répondu","Client a annulé","Adresse introuvable","Client demande de reporter","Problème d'accès","Autre"].map(m=>`<option value="${m}">${m}</option>`).join("")}
+      </select>
+      <label>Détails supplémentaires</label>
+      <textarea id="absent-detail" rows="2" placeholder="Précisez si nécessaire..." style="resize:vertical;margin-bottom:20px;"></textarea>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="set({absentPopup:null,absentReason:''})" style="flex:1;">Annuler</button>
+        <button class="btn btn-red" onclick="confirmAbsent()" style="flex:2;font-weight:700;">✓ Enregistrer l'absence</button>
+      </div>
+    </div>
+  </div></div>`;}
+
+  if(S.showDriverOrderForm){const df=S.driverOrderForm;return `<div style="display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;">${dHeader()}<div style="flex:1;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <div style="font-weight:800;font-size:17px;">➕ Nouvelle commande</div>
+        <button class="btn" onclick="set({showDriverOrderForm:false})" style="padding:5px 10px;">✕</button>
+      </div>
+      <div style="margin-bottom:12px;"><label>Nom du client *</label><input placeholder="Marie Dupont" oninput="S.driverOrderForm.name=this.value" value="${df.name}"></div>
+      <div style="margin-bottom:12px;"><label>Téléphone WhatsApp *</label><input placeholder="06 xx xx xx xx" oninput="S.driverOrderForm.phone=this.value" value="${df.phone}"></div>
+      <div style="margin-bottom:12px;"><label>Société (WhatsApp)</label>${socSel(df.societe,"S.driverOrderForm.societe=this.value")}</div>
+      <div style="margin-bottom:12px;"><label>Adresse pick-up *</label><input placeholder="Ex: Hay Saddam, Tanger" oninput="S.driverOrderForm.pickupAddr=this.value" value="${df.pickupAddr}"></div>
+      <div style="margin-bottom:12px;"><label>Lien Google Maps</label><input placeholder="https://maps.app.goo.gl/..." oninput="S.driverOrderForm.mapsLink=this.value" value="${df.mapsLink}"></div>
+      <div style="margin-bottom:12px;"><label>Créneau</label><input placeholder="Ex: 10h00-12h00" oninput="S.driverOrderForm.pickupTime=this.value" value="${df.pickupTime}"></div>
+      <div style="margin-bottom:18px;"><label>Notes</label><input placeholder="Ex: 2 sacs..." oninput="S.driverOrderForm.notes=this.value" value="${df.notes}"></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="set({showDriverOrderForm:false})">Annuler</button>
+        <button class="btn btn-green" style="flex:1;padding:11px;font-weight:700;" onclick="submitDriverOrder()">✓ Créer la commande</button>
+      </div>
+    </div>
+  </div></div>`;}
+
+  const my=S.orders.filter(o=>o.driver===S.driverName);
+  /* Sort by position for drag reorder, urgent first */
+  const sortByPos=(a,b)=>{
+    if(a.urgent&&!b.urgent) return -1;
+    if(!a.urgent&&b.urgent) return 1;
+    return (a.position||0)-(b.position||0);
+  };
+  const toPickup=[...my.filter(o=>o.status==="pending_pickup")].sort(sortByPos);
+  const collected=my.filter(o=>o.status==="collected");
+  const toDeliver=[...my.filter(o=>o.status==="pending_delivery")].sort(sortByPos);
+  const done=my.filter(o=>o.status==="done");
+  const absent=my.filter(o=>o.status==="absent");
+  const activeCount=toPickup.length+collected.length+toDeliver.length;
+
+  const nav=`<div style="border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);position:sticky;bottom:0;z-index:10;box-shadow:0 -1px 4px rgba(0,0,0,0.06);">
+    ${[{k:"orders",l:"Commandes",b:activeCount},{k:"route",l:"Trajet",b:0},{k:"history",l:"Historique",b:0}].map(n=>`
+    <button onclick="setDriverTab('${n.k}')" style="display:flex;flex-direction:column;align-items:center;padding:10px 0 14px;gap:4px;border:none;background:transparent;cursor:pointer;">
+      <div style="position:relative;"><span style="font-size:18px;">${n.k==="orders"?"📋":n.k==="route"?"🗺️":"📊"}</span>
+        ${n.b>0?`<span style="position:absolute;top:-6px;right:-11px;background:var(--orange);color:white;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;">${n.b}</span>`:""}
+      </div>
+      <span style="font-size:10px;color:${S.driverTab===n.k?"var(--accent)":"var(--muted)"};font-weight:${S.driverTab===n.k?"700":"400"};text-transform:uppercase;letter-spacing:0.5px;">${n.l}</span>
+    </button>`).join("")}
+  </div>`;
+
+  function dCard(o,btnLabel,btnClass,onClickFn,showAbsent=false){
+    const addr=o.pickupAddr||"";const mlink=o.mapsLink||"";
+    const isPickup=["pending_pickup","collected"].includes(o.status);
+    const barColor=o.status==="absent"?"var(--danger)":isPickup?"var(--orange)":"var(--accent)";
+    const isDraggable=["pending_pickup","pending_delivery"].includes(o.status);
+    return `<div id="card-${o.id}" class="order-card"
+      ${isDraggable?`draggable="true" ondragstart="dragStart(event,'${o.id}')" ondragover="dragOver(event,'${o.id}')" ondragend="dragEnd(event,'${o.id}')"`:""} 
+      style="background:var(--surface);border:1px solid ${o.urgent&&o.status!=='done'?'#fca5a5':'var(--border)'};border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:${o.urgent&&o.status!=='done'?'0 2px 8px rgba(220,38,38,0.15)':'0 1px 4px rgba(0,0,0,0.04)'};${isDraggable?'cursor:grab;':''}">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${barColor};border-radius:4px 0 0 4px;"></div>
+      <div style="padding-left:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div>
+            <span style="font-size:11px;color:var(--muted);font-weight:600;">#${o.id?.slice(-6)||"—"}</span>
+            ${o.societe?`<span style="margin-left:6px;font-size:10px;background:var(--accent-light);color:var(--accent);padding:2px 6px;border-radius:6px;font-weight:600;">${o.societe}</span>`:""}
+            ${o.addedByDriver?`<span style="margin-left:4px;font-size:10px;background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:6px;font-weight:600;">Ajouté par moi</span>`:""}
+          </div>
+          <span class="pill ${spc(o.status)}">${sl(o.status)}</span>
+        </div>
+        <div style="font-weight:800;font-size:16px;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          ${o.name}
+          ${o.urgent&&o.status!=="done"?`<span class="urgent-badge">🔴 URGENT</span>`:""}
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:2px;">📞 ${o.phone||"—"}</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:2px;">📍 ${addr}</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">🗓 Créée : ${fmtDt(o.createdAt)}</div>
+        ${o.collectedAt?`<div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:8px;">📦 Ramassée : ${fmtDt(o.collectedAt)}</div>`:""}
+        ${o.status==="absent"&&o.absentReason?`<div style="background:var(--danger-light);border-radius:var(--radius);padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--danger);font-weight:600;">⚠️ ${o.absentReason}</div>`:""}
+        ${isPickup&&o.suggestedLocal&&!o.local?`<div style="background:var(--yellow-light);border-radius:var(--radius);padding:6px 10px;margin-bottom:8px;font-size:12px;color:var(--yellow);font-weight:600;">💡 Local suggéré : ${o.suggestedLocal}</div>`:""}
+        ${o.local?`<div style="background:#ede9fe;border-radius:var(--radius);padding:8px 12px;margin-bottom:8px;">
+          <div style="font-size:10px;color:#5b21b6;font-weight:700;text-transform:uppercase;margin-bottom:5px;">🏪 Local de dépôt</div>
+          ${S.editingLocal===o.id
+            ?`<div style="display:flex;gap:8px;">${localSel(o.local,`updateLocal('${o.id}',this.value)`,false)}<button class="btn" style="padding:5px 10px;font-size:11px;flex-shrink:0;" onclick="set({editingLocal:null})">✕</button></div>`
+            :`<div style="display:flex;justify-content:space-between;align-items:center;"><span class="local-badge">🏪 ${o.local}</span><button class="btn" style="padding:4px 10px;font-size:11px;" onclick="set({editingLocal:'${o.id}'})">✏️</button></div>`}
+        </div>`:""}
+        <div style="background:var(--bg);border-radius:var(--radius);padding:8px 12px;margin-bottom:8px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:5px;">📝 Notes</div>
+          ${S.editingNotes===o.id
+            ?`<div style="display:flex;gap:8px;align-items:flex-start;"><textarea id="notes-${o.id}" rows="2" style="flex:1;padding:7px 10px;font-size:12px;resize:vertical;">${o.notes||""}</textarea><div style="display:flex;flex-direction:column;gap:4px;"><button class="btn btn-green" style="padding:5px 10px;font-size:11px;" onclick="saveNotes('${o.id}')">✓</button><button class="btn" style="padding:5px 10px;font-size:11px;" onclick="set({editingNotes:null})">✕</button></div></div>`
+            :`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:13px;color:${o.notes?"var(--text)":"var(--muted)"};">${o.notes||"Aucune note"}</span><button class="btn" style="padding:4px 10px;font-size:11px;flex-shrink:0;" onclick="set({editingNotes:'${o.id}'})">✏️</button></div>`}
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius);padding:8px 12px;margin-bottom:12px;">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:5px;">⏰ Créneau</div>
+          ${S.editingSlot===o.id
+            ?`<div style="display:flex;gap:8px;"><input id="slot-${o.id}" value="${o.pickupTime||""}" style="flex:1;padding:7px;font-size:12px;" onkeydown="if(event.key==='Enter')saveSlot('${o.id}')"><button class="btn btn-green" style="padding:6px 10px;font-size:11px;" onclick="saveSlot('${o.id}')">✓</button><button class="btn" style="padding:6px 10px;font-size:11px;" onclick="set({editingSlot:null})">✕</button></div>`
+            :`<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;font-weight:600;">${o.pickupTime||"Non défini"}</span><button class="btn" style="padding:5px 10px;font-size:11px;" onclick="set({editingSlot:'${o.id}'})">✏️</button></div>`}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="maps-btn" onclick="openMaps('${addr.replace(/'/g,"\\'")}','${mlink.replace(/'/g,"\\'")}')">🗺 Naviguer</button>
+          ${waBtn(o,addr)}
+          ${btnLabel?`<button class="btn ${btnClass}" onclick="${onClickFn}" style="font-size:12px;padding:8px 14px;font-weight:700;">${btnLabel}</button>`:""}
+          ${showAbsent?`<button class="btn-absent" onclick="openAbsentPopup('${o.id}')">🚫 Absent</button>`:""}
+        </div>
+      </div>
+    </div>`;}
+
+  let content="";
+  if(S.driverTab==="orders"){
+    const sum=`<div style="margin:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+      ${[{v:toPickup.length,l:"À ramasser",c:"var(--orange)",bg:"var(--orange-light)"},{v:collected.length,l:"En laverie",c:"var(--blue)",bg:"var(--blue-light)"},{v:toDeliver.length,l:"À livrer",c:"var(--accent)",bg:"var(--accent-light)"},{v:done.length,l:"Terminés",c:"#166534",bg:"#dcfce7"}].map(s=>`
+      <div style="text-align:center;background:${s.bg};border-radius:var(--radius);padding:10px 4px;">
+        <div style="font-size:22px;font-weight:800;color:${s.c};line-height:1;">${s.v}</div>
+        <div style="font-size:9px;color:${s.c};margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;opacity:0.8;">${s.l}</div>
+      </div>`).join("")}
+    </div>`;
+    const addBtn=`<div style="padding:0 12px 8px;"><button class="btn btn-green" style="width:100%;padding:11px;font-weight:700;" onclick="set({showDriverOrderForm:true})">➕ Ajouter une commande</button></div>`;
+    const sec=(title,bg,list,bl,bc,fn,sa=false)=>list.length===0?"":
+      `<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 12px 8px;"><span style="font-weight:800;font-size:14px;">${title}</span><span style="background:${bg};color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">${list.length}</span></div>
+      <div style="padding:0 12px;">${list.map(o=>dCard(o,bl,bc,fn(o),sa)).join("")}</div>`;
+    content=sum+addBtn
+      +sec("📦 À ramasser","var(--orange)",toPickup,"✓ Récupéré","btn-orange",o=>`openLocalPopup('${o.id}')`,true)
+      +sec("🧺 En laverie","var(--blue)",collected,"✓ Prêt à livrer","btn-green",o=>`advanceOrder('${o.id}','pending_delivery')`)
+      +sec("🚗 À livrer","var(--accent)",toDeliver,"✓ Livré","btn-green",o=>`advanceOrder('${o.id}','done')`)
+      +(absent.length>0?`<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 12px 8px;"><span style="font-weight:800;font-size:14px;">🚫 Clients absents</span><span style="background:var(--danger);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">${absent.length}</span></div><div style="padding:0 12px;">${absent.map(o=>dCard(o,"","","",false)).join("")}</div>`:"")
+      +(done.length>0?`<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 12px 8px;"><span style="font-weight:800;font-size:14px;">✅ Terminées</span><span style="background:#166534;color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">${done.length}</span></div>
+      <div style="padding:0 12px;">${done.map(o=>`<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;opacity:0.8;">
+        <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;">${o.name}</div><div style="font-size:11px;color:var(--muted);">📍 ${o.pickupAddr||""}</div><div style="font-size:10px;color:var(--muted);">🗓 ${fmtD(o.createdAt)}</div>${o.local?`<div style="margin-top:4px;"><span class="local-badge" style="font-size:10px;">🏪 ${o.local}</span></div>`:""}</div>
+        <span class="pill pill-done">Livré ✓</span>
+      </div>`).join("")}</div>`:"")
+      +(activeCount===0&&done.length===0&&absent.length===0?`<div style="text-align:center;padding:48px 20px;color:var(--muted);">📭<br><span style="font-size:13px;margin-top:8px;display:block;">Aucune commande pour le moment</span></div>`:"");
+  }
+  else if(S.driverTab==="route"){
+    const stops=[...toPickup,...toDeliver]; /* Trajet: À ramasser + Prêt à livrer seulement */
+    const allA=stops.map(o=>encodeURIComponent(o.pickupAddr||""));
+    const fr=allA.length>0?"https://www.google.com/maps/dir/"+allA.join("/"):"";
+    content=`<div style="padding:12px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div><div style="font-size:26px;font-weight:800;color:var(--accent);">${(stops.length*2.8).toFixed(1)} km</div><div style="font-size:12px;color:var(--muted);">${stops.length} arrêt(s)</div></div>
+        ${fr?`<button class="maps-btn" style="font-size:13px;padding:11px 18px;" onclick="window.open('${fr}','_blank')">🗺 Itinéraire complet</button>`:""}
+      </div>
+      ${stops.length===0?`<div style="text-align:center;padding:32px 0;color:var(--muted);">Aucun arrêt prévu</div>`:""}
+      ${stops.map((o,i)=>`<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--orange-light);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;margin-top:2px;">${i+1}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:2px;">${o.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px;">📞 ${o.phone||"—"}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📍 ${o.pickupAddr||""}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="pill ${spc(o.status)}">${sl(o.status)}</span>
+            ${o.local?`<span class="local-badge" style="font-size:10px;padding:3px 8px;">🏪 ${o.local}</span>`:""}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <button class="maps-btn" style="font-size:11px;padding:7px 10px;" onclick="openMaps('${(o.pickupAddr||"").replace(/'/g,"\\'")}','${(o.mapsLink||"").replace(/'/g,"\\'")}')">🗺 Go</button>
+          ${waBtn(o,o.pickupAddr||"")}
+        </div>
+      </div>`).join("")}
+    </div>`;}
+  else{
+    const aD=S.orders.filter(o=>o.driver===S.driverName&&o.status==="done").length;
+    const aA=S.orders.filter(o=>o.driver===S.driverName&&o.status==="absent").length;
+    content=`<div style="padding:12px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+          ${[{v:aD,l:"Terminées",c:"var(--accent)",bg:"var(--accent-light)"},{v:aA,l:"Absences",c:"var(--danger)",bg:"var(--danger-light)"}].map(s=>`
+          <div style="background:${s.bg};border-radius:var(--radius);padding:14px;">
+            <div style="font-size:26px;font-weight:800;color:${s.c};">${s.v}</div>
+            <div style="font-size:11px;color:${s.c};font-weight:700;text-transform:uppercase;opacity:0.8;margin-top:3px;">${s.l}</div>
+          </div>`).join("")}
+        </div>
+      </div>
+      ${done.length===0&&absent.length===0?`<div style="text-align:center;padding:32px;color:var(--muted);">Aucun historique pour aujourd'hui</div>`:""}
+      ${done.map(o=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+          <div><div style="font-weight:700;font-size:14px;">${o.name}</div><div style="font-size:11px;color:var(--muted);">📍 ${o.pickupAddr||""}</div><div style="font-size:10px;color:var(--muted);">🗓 Créée : ${fmtD(o.createdAt)}</div>
+              ${o.collectedAt?`<div style="font-size:10px;color:var(--blue);font-weight:600;">📦 Ramassée : ${fmtD(o.collectedAt)}</div>`:""}
+              ${o.deliveredAt?`<div style="font-size:10px;color:var(--accent);font-weight:600;">✅ Livrée : ${fmtD(o.deliveredAt)}</div>`:""}
+            </div>
+          <span class="pill pill-done">Livré ✓</span>
+        </div>${o.local?`<span class="local-badge" style="font-size:11px;">🏪 ${o.local}</span>`:""}</div>`).join("")}
+      ${absent.map(o=>`<div style="background:var(--danger-light);border:1px solid #fca5a5;border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-weight:700;font-size:14px;">${o.name}</div><div style="font-size:11px;color:var(--danger);">📍 ${o.pickupAddr||""}</div><div style="font-size:11px;color:var(--danger);font-weight:600;margin-top:4px;">⚠️ ${o.absentReason||"Client absent"}</div></div>
+          <span class="pill pill-absent">Absent</span>
+        </div></div>`).join("")}
+    </div>`;}
+
+  return `<div style="display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg);">
+    ${dHeader()}<div style="flex:1;overflow-y:auto;">${content}</div>${nav}
+  </div>`;}
+
+/* ACTIONS */
+function setCmTab(t){set({cmTab:t,showForm:false,editOrderId:null,showDriverForm:false,showClientForm:false,showRelanceForm:false});}
+function setDriverTab(t){set({driverTab:t,editingSlot:null,editingLocal:null,editingNotes:null});}
+function openForm(){set({showForm:true,form:{name:"",phone:"",pickupAddr:"",mapsLink:"",pickupTime:"",notes:"",driver:"",suggestedLocal:"",societe:""}});}
+function closeForm(){set({showForm:false,editOrderId:null});}
+function openClientForm(){set({showClientForm:true,clientForm:{name:"",phone:"",address:"",notes:""}});}
+function openDriverForm(id){
+  if(id){const d=S.drivers.find(x=>x.id===id);if(!d)return;set({showDriverForm:true,editDriverId:id,driverForm:{name:d.name,password:d.password||""}});}
+  else set({showDriverForm:true,editDriverId:null,driverForm:{name:"",password:""}});
+}
+function closeDriverForm(){set({showDriverForm:false,editDriverId:null,driverForm:{name:"",password:""}});}
+function openLocalPopup(id){const o=S.orders.find(x=>x.id===id);set({localPopup:id,localSelected:o?.suggestedLocal||""});}
+function openAbsentPopup(id){set({absentPopup:id,absentReason:""});}
+
+async function submitDriver(){
+  const df=S.driverForm;
+  if(!df.name||!df.password){alert("Nom et mot de passe obligatoires.");return;}
+  const id=df.name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g," ").trim().split(" ")[0];
+  const ini=df.name.trim().split(" ").map(w=>w[0]).join("").toUpperCase();
+  const data={name:df.name.trim(),initials:ini,password:df.password.trim()};
+  try{
+    if(S.editDriverId){await fbUpd("drivers",S.editDriverId,data);showToast("✓ Livreur modifié");}
+    else{
+      const ex=await db.collection("drivers").doc(id).get();
+      if(ex.exists){alert(`ID "${id}" déjà utilisé.`);return;}
+      await db.collection("drivers").doc(id).set({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      showToast(`✓ Livreur créé — identifiant: ${id}`);
+    }
+    closeDriverForm();
+  }catch(e){alert("Erreur Firebase : "+e.message+"\n\nVérifiez les règles Firestore.");}
+}
+async function deleteDriver(id,name){if(!confirm(`Supprimer "${name}" ?`))return;await fbDel("drivers",id);showToast("🗑️ Livreur supprimé");}
+async function submitClient(){
+  const cf=S.clientForm;if(!cf.name){alert("Nom obligatoire.");return;}
+  await fbAdd("clients",{name:cf.name,phone:cf.phone,address:cf.address,notes:cf.notes});
+  set({showClientForm:false,clientForm:{name:"",phone:"",address:"",notes:""}});showToast("✓ Client enregistré");
+}
+async function deleteClient(id,name){if(!confirm(`Supprimer "${name}" ?`))return;await fbDel("clients",id);showToast("🗑️ Client supprimé");}
+function deleteCmOrder(id){if(!confirm("Supprimer cette commande ?"))return;fbDel("orders",id);showToast("🗑️ Commande supprimée");}
+function confirmLocal(){
+  const sel=document.getElementById("local-select");const val=sel?sel.value:S.localSelected;
+  if(!val){alert("Veuillez sélectionner un local.");return;}
+  fbUpd("orders",S.localPopup,{status:"collected",local:val,collectedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  set({localPopup:null,localSelected:""});showToast("✓ Ramassé — déposé à : "+val);
+}
+function confirmAbsent(){
+  const sel=document.getElementById("absent-sel");const detail=document.getElementById("absent-detail");
+  const motif=(detail&&detail.value.trim())||(sel&&sel.value)||"";
+  if(!motif){alert("Veuillez indiquer un motif.");return;}
+  fbUpd("orders",S.absentPopup,{status:"absent",absentReason:motif});
+  set({absentPopup:null,absentReason:""});showToast("⚠️ Absence enregistrée");
+}
+function updateLocal(id,val){fbUpd("orders",id,{local:val});set({editingLocal:null});showToast("✓ Local mis à jour");}
+function advanceOrder(id,next){
+  const patch={status:next};
+  if(next==="collected") patch.collectedAt=firebase.firestore.FieldValue.serverTimestamp();
+  if(next==="done") patch.deliveredAt=firebase.firestore.FieldValue.serverTimestamp();
+  fbUpd("orders",id,patch);set({editingSlot:null});
+  const m={pending_delivery:"✓ Prêt à livrer !",done:"✓ Livraison terminée ! 🎉"};showToast(m[next]||"✓ Mis à jour");
+}
+function saveSlot(id){const i=document.getElementById("slot-"+id);if(!i)return;fbUpd("orders",id,{pickupTime:i.value.trim()});set({editingSlot:null});showToast("✓ Créneau mis à jour");}
+function saveNotes(id){const t=document.getElementById("notes-"+id);if(!t)return;fbUpd("orders",id,{notes:t.value.trim()});set({editingNotes:null});showToast("✓ Notes mises à jour");}
+function submitOrder(){
+  const f=S.form;if(!f.name||!f.pickupAddr||!f.driver){alert("Champs obligatoires manquants.");return;}
+  fbAdd("orders",{name:f.name,phone:f.phone,pickupAddr:f.pickupAddr,mapsLink:f.mapsLink,deliveryAddr:f.pickupAddr,pickupTime:f.pickupTime,notes:f.notes,driver:f.driver,suggestedLocal:f.suggestedLocal,societe:f.societe,urgent:f.urgent||false,status:"pending_pickup",local:null,absentReason:null});
+  saveClientAutomatic(f.name,f.phone,f.pickupAddr,f.mapsLink);
+  closeForm();showToast("✓ Commande créée et assignée à "+f.driver);
+}
+async function updateOrder(){
+  const f=S.form;if(!f.name||!f.pickupAddr||!f.driver){alert("Champs obligatoires manquants.");return;}
+  await fbUpd("orders",S.editOrderId,{name:f.name,phone:f.phone,pickupAddr:f.pickupAddr,mapsLink:f.mapsLink,pickupTime:f.pickupTime,notes:f.notes,driver:f.driver,suggestedLocal:f.suggestedLocal,societe:f.societe,urgent:f.urgent||false});
+  closeForm();showToast("✓ Commande modifiée");
+}
+async function openEditOrder(id){
+  const o=S.orders.find(x=>x.id===id);if(!o)return;
+  set({editOrderId:id,showRelanceForm:false,form:{name:o.name||"",phone:o.phone||"",pickupAddr:o.pickupAddr||"",mapsLink:o.mapsLink||"",pickupTime:o.pickupTime||"",notes:o.notes||"",driver:o.driver||"",suggestedLocal:o.suggestedLocal||"",societe:o.societe||"",urgent:o.urgent||false}});
+}
+function openRelance(id){const o=S.orders.find(x=>x.id===id);set({showRelanceForm:true,relanceOrderId:id,relanceDriverId:o?o.driver:""});}
+async function confirmRelance(){
+  if(!S.relanceDriverId){alert("Choisissez un livreur.");return;}
+  await fbUpd("orders",S.relanceOrderId,{status:"pending_pickup",driver:S.relanceDriverId,absentReason:null,local:null});
+  set({showRelanceForm:false,relanceOrderId:null,relanceDriverId:""});showToast("✓ Commande relancée !");
+}
+function submitDriverOrder(){
+  const df=S.driverOrderForm;if(!df.name||!df.pickupAddr){alert("Nom et adresse obligatoires.");return;}
+  fbAdd("orders",{name:df.name,phone:df.phone,pickupAddr:df.pickupAddr,mapsLink:df.mapsLink,deliveryAddr:df.pickupAddr,pickupTime:df.pickupTime,notes:df.notes,driver:S.driverName,suggestedLocal:"",societe:df.societe,urgent:false,status:"pending_pickup",local:null,absentReason:null,addedByDriver:true});
+  saveClientAutomatic(df.name,df.phone,df.pickupAddr,df.mapsLink);
+  set({showDriverOrderForm:false,driverOrderForm:{name:"",phone:"",pickupAddr:"",mapsLink:"",pickupTime:"",notes:"",societe:""}});showToast("✓ Commande créée !");
+}
+
+/* N'oubliez pas de mettre à jour les règles Firestore pour inclure 'clients' */
+db.collection("drivers").get().then(snap=>{S.drivers=snap.docs.map(d=>({id:d.id,...d.data()}));render();}).catch(()=>render());
+render();
+</script>
+</body>
+</html>
